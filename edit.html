@@ -667,6 +667,147 @@ section {
   .findings-grid .finding-card { border-right: none; }
   .pc-dims { flex-wrap: wrap; }
 }
+
+
+
+body.edit-mode 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ═══════════════════════════════════════
+   UNIVERSAL EDIT MODE
+═══════════════════════════════════════ */
+
+/* Edit bar */
+.edit-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 56px;
+  gap: 16px;
+  box-shadow: 0 -2px 24px rgba(0,0,0,0.5);
+}
+.edit-bar-left { display: flex; align-items: center; gap: 12px; }
+.edit-bar-right { display: flex; align-items: center; gap: 12px; }
+
+.eb-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 9px 20px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.eb-btn-primary { background: #fff; color: #000; }
+.eb-btn-primary:hover { background: #e50010; color: #fff; }
+.eb-btn-primary.active { background: #e50010; color: #fff; }
+.eb-btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.5);
+  cursor: not-allowed;
+}
+.eb-btn-secondary.ready {
+  border-color: #fff;
+  color: #fff;
+  cursor: pointer;
+}
+.eb-btn-secondary.ready:hover { background: #fff; color: #000; }
+.eb-btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.4);
+  cursor: pointer;
+}
+.eb-btn-ghost:hover { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.7); }
+
+.eb-status {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.eb-status.on { color: #e50010; }
+.eb-hint {
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  flex: 1;
+  text-align: center;
+}
+.eb-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Edit mode active state */
+body.edit-mode {
+  cursor: text;
+}
+body.edit-mode *:not(.edit-bar):not(.edit-bar *):not(.site-header):not(.site-header *):not(.header-nav):not(.header-nav *) {
+  outline: none;
+}
+
+/* Highlight editable regions on hover */
+body.edit-mode p:hover,
+body.edit-mode h1:hover,
+body.edit-mode h2:hover,
+body.edit-mode span:hover,
+body.edit-mode div:not(.edit-bar):not(.site-header):not(.page-wrap):not(.section-inner):not(.section-label):not(.hero):not(.hero-left):not(.hero-right):not(.backlog-section):not(.backlog-bars):not(.bar-row):not(.overview-body):not(.findings-grid):not(.recs-list):not(.priority-list):not(.priority-card):not(.pc-body):not(.pc-dims):not(.pc-score-col):not(.pc-rank-col):not(.explorer-bar):not(.exp-wrap):not(.staff-bar-cell):hover,
+body.edit-mode td:hover,
+body.edit-mode li:hover {
+  outline: 1px dashed rgba(229,0,16,0.35) !important;
+  background: rgba(229,0,16,0.03) !important;
+  cursor: text;
+}
+
+body.edit-mode *:focus {
+  outline: 2px solid #e50010 !important;
+  background: rgba(229,0,16,0.05) !important;
+}
+
+/* Page bottom padding so bar doesn't cover content */
+body { padding-bottom: 64px; }
+
+/* Prevent editing interactive elements */
+body.edit-mode input,
+body.edit-mode select,
+body.edit-mode button:not(.eb-btn),
+body.edit-mode .exp-table,
+body.edit-mode .exp-wrap,
+body.edit-mode .explorer-bar {
+  pointer-events: auto !important;
+}
+
+/* Unsaved indicator */
+.unsaved-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #e50010;
+  display: none;
+}
+.unsaved-dot.show { display: inline-block; animation: blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* Undo history flash */
+@keyframes undoFlash {
+  0% { background: rgba(255,200,0,0.15); }
+  100% { background: transparent; }
+}
+.undo-flash { animation: undoFlash 0.4s ease; }
+
 </style>
 </head>
 <body>
@@ -695,9 +836,9 @@ section {
   <div class="hero-left">
     <div class="hero-eyebrow reveal">Collection Management &amp; Cataloging</div>
     <h1 class="hero-title reveal reveal-2">
-      C-MAP<br>
+      <span>C-MAP</span><br>
       <span class="line-italic">Acquisition</span><br>
-      DATA
+      <span>DATA</span>
     </h1>
     <p class="hero-desc reveal reveal-3">
       Analysis of 1,680 acquisition records across five primary departments entered into the collection management system between 2015 and 2025. Prepared July 2025.
@@ -1458,5 +1599,206 @@ const obs = new IntersectionObserver(entries=>{
 },{threshold:0.08});
 document.querySelectorAll('.sr').forEach(el=>obs.observe(el));
 </script>
+
+  <span class="edit-hint" id="editHint">Click "Edit Mode" to start editing any text on this page</span>
+  <button class="edit-save" id="editSave" onclick="saveEdits()" disabled>⬇ Download Edited File</button>
+</div>
+
+
+
+
+<!-- UNIVERSAL EDIT BAR -->
+<div class="edit-bar" id="editBar">
+  <div class="edit-bar-left">
+    <button class="eb-btn eb-btn-primary" id="editToggleBtn" onclick="toggleEdit()">✏&nbsp; Edit Mode</button>
+    <div class="unsaved-dot" id="unsavedDot"></div>
+    <span class="eb-status" id="ebStatus">View only</span>
+  </div>
+  <span class="eb-hint" id="ebHint">Click "Edit Mode" to edit any text, number, or table cell on this page</span>
+  <div class="edit-bar-right">
+    <button class="eb-btn eb-btn-ghost" id="undoBtn" onclick="doUndo()" title="Undo (Ctrl+Z)" style="display:none">↩ Undo</button>
+    <div class="eb-divider"></div>
+    <button class="eb-btn eb-btn-secondary" id="downloadBtn" onclick="downloadEdited()" disabled>⬇&nbsp; Download Edited File</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// UNIVERSAL EDIT ENGINE
+// ═══════════════════════════════════════
+
+let editMode = false;
+let hasChanges = false;
+let undoStack = [];
+const MAX_UNDO = 50;
+
+// Elements we never want to make editable
+const SKIP_SELECTORS = [
+  '.edit-bar', '.edit-bar *',
+  '.site-header', '.header-nav', '.header-nav a',
+  '.exp-table', '.exp-table *',
+  '.explorer-bar', '.explorer-bar *',
+  'input', 'select', 'button',
+  'script', 'style'
+];
+
+function isSkipped(el) {
+  return SKIP_SELECTORS.some(sel => {
+    try { return el.matches(sel) || el.closest(sel.split(' ')[0]); } catch(e) { return false; }
+  });
+}
+
+// ── Toggle edit mode ──
+function toggleEdit() {
+  editMode = !editMode;
+  const btn = document.getElementById('editToggleBtn');
+  const status = document.getElementById('ebStatus');
+  const hint = document.getElementById('ebHint');
+  const undoBtn = document.getElementById('undoBtn');
+
+  if (editMode) {
+    // Make everything editable
+    document.body.classList.add('edit-mode');
+    makeAllEditable(true);
+    btn.textContent = '✕  Exit Edit Mode';
+    btn.classList.add('active');
+    status.textContent = 'Editing';
+    status.className = 'eb-status on';
+    hint.textContent = 'Click anything to edit — text, numbers, table cells, labels. Press Ctrl+Z to undo.';
+    undoBtn.style.display = 'inline-block';
+  } else {
+    // Exit edit mode
+    document.body.classList.remove('edit-mode');
+    makeAllEditable(false);
+    btn.textContent = '✏  Edit Mode';
+    btn.classList.remove('active');
+    status.textContent = hasChanges ? '● Unsaved changes' : 'View only';
+    status.className = 'eb-status' + (hasChanges ? ' on' : '');
+    hint.textContent = hasChanges ? 'You have unsaved changes — click Download to save your version' : 'Click "Edit Mode" to edit any text, number, or table cell on this page';
+    undoBtn.style.display = 'none';
+    if (hasChanges) {
+      document.getElementById('downloadBtn').className = 'eb-btn eb-btn-secondary ready';
+      document.getElementById('downloadBtn').disabled = false;
+    }
+    // blur any focused element
+    if (document.activeElement && document.activeElement !== document.body) {
+      document.activeElement.blur();
+    }
+  }
+}
+
+function makeAllEditable(on) {
+  // Walk all elements and set contenteditable
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_ELEMENT,
+    null, false
+  );
+  let node;
+  while (node = walker.nextNode()) {
+    if (isSkipped(node)) continue;
+    // Only make leaf-level or near-leaf elements editable
+    // to avoid nested contenteditable conflicts
+    const tag = node.tagName.toLowerCase();
+    const editableTags = ['p','span','h1','h2','h3','h4','td','th','li','div','a','strong','em','b','i'];
+    if (editableTags.includes(tag)) {
+      if (on) {
+        node.contentEditable = 'true';
+        node.setAttribute('data-orig', node.innerHTML);
+      } else {
+        node.contentEditable = 'false';
+      }
+    }
+  }
+}
+
+// ── Track changes ──
+document.addEventListener('input', function(e) {
+  if (!editMode) return;
+  const el = e.target;
+  if (isSkipped(el)) return;
+
+  hasChanges = true;
+  document.getElementById('unsavedDot').className = 'unsaved-dot show';
+  document.getElementById('downloadBtn').className = 'eb-btn eb-btn-secondary ready';
+  document.getElementById('downloadBtn').disabled = false;
+
+  // Push to undo stack
+  undoStack.push({ el, html: el.getAttribute('data-orig') || '' });
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  // Update orig for next undo
+  el.setAttribute('data-orig', el.innerHTML);
+});
+
+// ── Undo ──
+function doUndo() {
+  if (!undoStack.length) return;
+  const last = undoStack.pop();
+  if (last && last.el) {
+    last.el.innerHTML = last.html;
+    last.el.classList.add('undo-flash');
+    setTimeout(() => last.el.classList.remove('undo-flash'), 400);
+  }
+}
+
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown', function(e) {
+  // E to toggle (when not in an editable field)
+  if (e.key === 'e' && !e.target.isContentEditable && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT') {
+    toggleEdit();
+  }
+  // Ctrl/Cmd + S to download
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    if (hasChanges) downloadEdited();
+  }
+  // Ctrl/Cmd + Z for undo
+  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && editMode) {
+    e.preventDefault();
+    doUndo();
+  }
+});
+
+// ── Download edited file ──
+function downloadEdited() {
+  if (!hasChanges) return;
+
+  // Temporarily exit edit mode for clean snapshot
+  const wasEditing = editMode;
+  makeAllEditable(false);
+  document.body.classList.remove('edit-mode');
+
+  // Remove data-orig attributes from snapshot
+  const clone = document.documentElement.cloneNode(true);
+  clone.querySelectorAll('[data-orig]').forEach(el => el.removeAttribute('data-orig'));
+  // Also clean up contenteditable
+  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+
+  const fullHTML = '<!DOCTYPE html>\n' + clone.outerHTML;
+
+  // Restore state
+  if (wasEditing) {
+    makeAllEditable(true);
+    document.body.classList.add('edit-mode');
+  }
+
+  const blob = new Blob([fullHTML], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cmap_report_edited.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Feedback
+  const btn = document.getElementById('downloadBtn');
+  const orig = btn.textContent;
+  btn.textContent = '✓  Downloaded!';
+  setTimeout(() => { btn.textContent = orig; }, 2500);
+}
+</script>
+
 </body>
 </html>
